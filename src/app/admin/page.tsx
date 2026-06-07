@@ -1,9 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Users, Radio, Key, Monitor, FolderKanban, Activity, Shield } from "lucide-react"
+import { Users, Radio, Key, Monitor, FolderKanban, Activity, Shield, Database, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { timeAgo } from "@/lib/utils"
 
@@ -56,8 +57,10 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [seeding, setSeeding] = useState(false)
+  const [seedFeedback, setSeedFeedback] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchDashboard = () => {
     fetch("/api/admin/dashboard")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load admin dashboard")
@@ -71,7 +74,30 @@ export default function AdminDashboardPage() {
         setError(err.message)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    fetchDashboard()
   }, [])
+
+  const handleSeed = async () => {
+    setSeeding(true)
+    setSeedFeedback(null)
+    try {
+      const res = await fetch("/api/admin/seed-data", { method: "POST" })
+      const json = await res.json()
+      if (res.ok) {
+        setSeedFeedback(`Created: ${Object.entries(json.counts).map(([k, v]) => `${v} ${k}`).join(", ")}`)
+        fetchDashboard()
+      } else {
+        setSeedFeedback(json.error || json.message || "Seed failed")
+      }
+    } catch {
+      setSeedFeedback("Seed request failed")
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -93,13 +119,51 @@ export default function AdminDashboardPage() {
   }
 
   const { stats, recentUsers, recentSessions } = data!
+  const isEmpty = Object.values(stats).every((v) => v === 0)
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-display-xs font-bold text-white">Admin Control Panel</h1>
-        <p className="text-sm text-muted mt-1">Full platform management</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display-xs font-bold text-white">Admin Control Panel</h1>
+          <p className="text-sm text-muted mt-1">Full platform management</p>
+        </div>
+        <Button
+          variant="outline"
+          className="border-primary/30 text-primary hover:bg-primary/10"
+          onClick={handleSeed}
+          disabled={seeding}
+        >
+          {seeding ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Database className="w-4 h-4 mr-2" />
+          )}
+          {seeding ? "Generating..." : "Seed Demo Data"}
+        </Button>
       </div>
+
+      {seedFeedback && (
+        <div className="text-xs text-muted bg-white/[0.02] border border-border rounded-lg px-4 py-2">
+          {seedFeedback}
+        </div>
+      )}
+
+      {isEmpty && (
+        <Card className="border-dashed border-accent/30 bg-accent/[0.02]">
+          <CardContent className="p-8 text-center">
+            <Database className="w-10 h-10 text-muted mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white mb-1">No Platform Data Yet</h3>
+            <p className="text-sm text-muted mb-4 max-w-md mx-auto">
+              Your platform is fresh. Click "Seed Demo Data" above to populate the admin panel with sample users, projects, licenses, sessions, and audit logs for testing.
+            </p>
+            <Button onClick={handleSeed} disabled={seeding}>
+              {seeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Database className="w-4 h-4 mr-2" />}
+              Generate Demo Data
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {statCards.map((stat, i) => {
