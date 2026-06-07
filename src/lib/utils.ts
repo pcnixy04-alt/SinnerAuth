@@ -20,7 +20,9 @@ export function generateLicenseKey(): string {
 
 export function generateApiKey(): { key: string; prefix: string; lastChars: string } {
   const prefix = "sa_" + Math.random().toString(36).substring(2, 8)
-  const key = prefix + "_" + require("crypto").randomBytes(32).toString("hex")
+  const crypto = typeof window === "undefined" ? require("crypto") : null
+  const randomPart = crypto ? crypto.randomBytes(32).toString("hex") : Array.from({ length: 64 }, () => Math.random().toString(36)[2]).join("")
+  const key = prefix + "_" + randomPart
   const lastChars = key.slice(-4)
   return { key, prefix, lastChars }
 }

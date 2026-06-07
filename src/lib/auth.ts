@@ -1,5 +1,8 @@
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
+import { authOptions } from "./auth-options"
+
+export { authOptions }
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)

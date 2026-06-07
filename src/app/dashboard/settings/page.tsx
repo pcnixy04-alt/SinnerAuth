@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { User, Mail, Shield, Bell, Globe, Palette, Save } from "lucide-react"
+import { User, Mail, Shield, Bell, Globe, Palette, Save, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,14 +12,23 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
+  const { data: session, status } = useSession()
   const [profile, setProfile] = useState({
-    displayName: "John Doe",
-    username: "johndoe",
-    email: "john@example.com",
+    displayName: session?.user?.name ?? "",
+    username: "",
+    email: session?.user?.email ?? "",
   })
 
   const handleSave = () => {
     toast.success("Settings saved successfully!")
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -44,7 +54,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input id="username" value={profile.username} onChange={e => setProfile({ ...profile, username: e.target.value })} />
+                <Input id="username" placeholder="Set username" value={profile.username} onChange={e => setProfile({ ...profile, username: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2">

@@ -1,20 +1,66 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search, Radio, XCircle, MoreHorizontal } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { timeAgo } from "@/lib/utils"
 
-const sessions = [
-  { id: "1", user: "John Doe", ip: "192.168.1.1", device: "Windows 11 / Chrome", location: "New York, US", status: "active", lastActivity: "Now" },
-  { id: "2", user: "Jane Smith", ip: "10.0.0.1", device: "macOS / Safari", location: "London, UK", status: "active", lastActivity: "5 min ago" },
-  { id: "3", user: "Bob Johnson", ip: "172.16.0.1", device: "Linux / Firefox", location: "Berlin, DE", status: "active", lastActivity: "15 min ago" },
-  { id: "4", user: "Alice Brown", ip: "192.168.1.2", device: "Android / Chrome", location: "Tokyo, JP", status: "idle", lastActivity: "1 hour ago" },
-  { id: "5", user: "Charlie Wilson", ip: "45.33.32.156", device: "Windows 10 / Edge", location: "Moscow, RU", status: "suspicious", lastActivity: "3 min ago" },
-]
+interface Session {
+  id: string
+  token: string
+  ipAddress: string
+  userAgent: string
+  location: string | null
+  isActive: boolean
+  lastActivity: string
+  expiresAt: string
+  createdAt: string
+  project: { name: string } | null
+}
 
 export default function SessionsPage() {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchSessions = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/sessions")
+      if (!res.ok) throw new Error("Failed to fetch sessions")
+      const data = await res.json()
+      setSessions(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSessions()
+  }, [])
+
+  const handleTerminate = async (id: string) => {
+    if (!confirm("Are you sure you want to terminate this session?")) return
+    try {
+      const res = await fetch(`/api/sessions/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to terminate session")
+      fetchSessions()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const activeCount = sessions.filter((s) => s.isActive).length
+
+  const truncate = (str: string, max: number) =>
+    str.length > max ? str.slice(0, max) + "..." : str
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -24,7 +70,7 @@ export default function SessionsPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted">
           <Radio className="w-4 h-4 text-success" />
-          <span>{sessions.filter(s => s.status === "active").length} active sessions</span>
+          <span>{activeCount} active sessions</span>
         </div>
       </div>
 
@@ -41,7 +87,7 @@ export default function SessionsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-4 text-xs text-muted font-medium">User</th>
+                  <th className="text-left p-4 text-xs text-muted font-medium">User / Project</th>
                   <th className="text-left p-4 text-xs text-muted font-medium">IP Address</th>
                   <th className="text-left p-4 text-xs text-muted font-medium">Device</th>
                   <th className="text-left p-4 text-xs text-muted font-medium">Location</th>
@@ -51,36 +97,61 @@ export default function SessionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sessions.map((session, i) => (
-                  <motion.tr
-                    key={session.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="border-b border-border last:border-0 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="p-4 text-sm text-white font-medium">{session.user}</td>
-                    <td className="p-4 text-sm text-muted font-mono">{session.ip}</td>
-                    <td className="p-4 text-sm text-muted">{session.device}</td>
-                    <td className="p-4 text-sm text-muted">{session.location}</td>
-                    <td className="p-4">
-                      <Badge variant={session.status === "active" ? "success" : session.status === "idle" ? "warning" : "destructive"}>
-                        {session.status}
-                      </Badge>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-sm text-muted">
+                      Loading sessions...
                     </td>
-                    <td className="p-4 text-sm text-muted">{session.lastActivity}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button className="p-1.5 text-muted hover:text-accent transition-colors">
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                        <button className="p-1.5 text-muted hover:text-white transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </div>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-sm text-destructive">
+                      {error}
                     </td>
-                  </motion.tr>
-                ))}
+                  </tr>
+                ) : sessions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-sm text-muted">
+                      No sessions found.
+                    </td>
+                  </tr>
+                ) : (
+                  sessions.map((session, i) => (
+                    <motion.tr
+                      key={session.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="border-b border-border last:border-0 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="p-4 text-sm text-white font-medium">
+                        {session.project?.name ?? "Unknown"}
+                      </td>
+                      <td className="p-4 text-sm text-muted font-mono">{session.ipAddress}</td>
+                      <td className="p-4 text-sm text-muted">{truncate(session.userAgent, 40)}</td>
+                      <td className="p-4 text-sm text-muted">{session.location ?? "Unknown"}</td>
+                      <td className="p-4">
+                        <Badge variant={session.isActive ? "success" : "warning"}>
+                          {session.isActive ? "active" : "inactive"}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-sm text-muted">{timeAgo(session.lastActivity)}</td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            className="p-1.5 text-muted hover:text-accent transition-colors"
+                            onClick={() => handleTerminate(session.id)}
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 text-muted hover:text-white transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

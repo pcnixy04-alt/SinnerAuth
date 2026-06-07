@@ -1,20 +1,75 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { BarChart3, TrendingUp, Users, Radio, Key, Monitor, Activity } from "lucide-react"
+import { BarChart3, TrendingUp, Users, Key, Monitor, Activity } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatNumber } from "@/lib/utils"
 
-const weeklyData = [1200, 1900, 1500, 2100, 1800, 2400, 2100]
-const monthlyData = [45000, 52000, 49000, 58000, 63000, 59000, 72000, 68000, 75000, 82000, 78000, 95000]
+interface AnalyticsMetrics {
+  totalUsers: number
+  totalSessions: number
+  totalLicenses: number
+  totalDevices: number
+}
 
-const metrics = [
-  { label: "Total Authentications", value: "2,847,392", change: "+18.3%", icon: Activity },
-  { label: "New Users", value: "12,847", change: "+12.5%", icon: Users },
-  { label: "Avg. Session Duration", value: "24m 18s", change: "+5.2%", icon: Radio },
-  { label: "License Activations", value: "8,451", change: "+22.7%", icon: Key },
+interface AnalyticsData {
+  metrics: AnalyticsMetrics
+  weeklyData: number[]
+  monthlyData: number[]
+}
+
+const metricConfigs = [
+  { label: "Total Users", key: "totalUsers" as const, icon: Users },
+  { label: "Total Sessions", key: "totalSessions" as const, icon: Activity },
+  { label: "Total Licenses", key: "totalLicenses" as const, icon: Key },
+  { label: "Total Devices", key: "totalDevices" as const, icon: Monitor },
 ]
 
+const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
 export default function AnalyticsPage() {
+  const [data, setData] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/analytics")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load analytics")
+        return res.json()
+      })
+      .then((json: AnalyticsData) => {
+        setData(json)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-muted text-sm">Loading analytics...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-accent text-sm">Error: {error}</div>
+      </div>
+    )
+  }
+
+  const { metrics, weeklyData, monthlyData } = data!
+  const maxWeekly = Math.max(...weeklyData, 1)
+  const maxMonthly = Math.max(...monthlyData, 1)
+
   return (
     <div className="space-y-6">
       <div>
@@ -23,11 +78,12 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, i) => {
-          const Icon = metric.icon
+        {metricConfigs.map((config, i) => {
+          const Icon = config.icon
+          const value = metrics[config.key]
           return (
             <motion.div
-              key={metric.label}
+              key={config.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
@@ -36,10 +92,9 @@ export default function AnalyticsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Icon className="w-4 h-4 text-muted" />
-                    <span className="text-xs text-success">{metric.change}</span>
                   </div>
-                  <span className="text-xl font-bold text-white">{metric.value}</span>
-                  <p className="text-xs text-muted mt-0.5">{metric.label}</p>
+                  <span className="text-xl font-bold text-white">{formatNumber(value)}</span>
+                  <p className="text-xs text-muted mt-0.5">{config.label}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -59,10 +114,10 @@ export default function AnalyticsPage() {
             <div className="h-48 flex items-end gap-2">
               {weeklyData.map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full bg-primary/20 rounded-t relative group cursor-pointer" style={{ height: `${(h / 2400) * 100}%` }}>
+                  <div className="w-full bg-primary/20 rounded-t relative group cursor-pointer" style={{ height: `${(h / maxWeekly) * 100}%` }}>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary to-primary/50 rounded-t transition-all group-hover:from-primary/80" style={{ height: "100%" }} />
                   </div>
-                  <span className="text-xs text-muted">{"Mon Tue Wed Thu Fri Sat Sun".split(" ")[i]}</span>
+                  <span className="text-xs text-muted">{dayLabels[i]}</span>
                 </div>
               ))}
             </div>
@@ -80,7 +135,7 @@ export default function AnalyticsPage() {
             <div className="h-48 flex items-end gap-2">
               {monthlyData.map((h, i) => (
                 <div key={i} className="flex-1 bg-secondary/20 rounded-t relative group cursor-pointer">
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-secondary/50 rounded-t transition-all group-hover:from-secondary/80" style={{ height: `${(h / 95000) * 100}%` }} />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-secondary/50 rounded-t transition-all group-hover:from-secondary/80" style={{ height: `${(h / maxMonthly) * 100}%` }} />
                 </div>
               ))}
             </div>

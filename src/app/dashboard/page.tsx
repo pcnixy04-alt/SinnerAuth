@@ -4,28 +4,113 @@ import { motion } from "framer-motion"
 import { Users, Radio, Key, Monitor, Shield, Activity, ArrowUp, ArrowDown, AlertTriangle, CheckCircle, XCircle, TrendingUp, BarChart3, Gauge, Zap } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
+import { timeAgo, formatNumber } from "@/lib/utils"
 
-const stats = [
-  { label: "Active Users", value: "12,847", change: "+12.5%", icon: Users, trend: "up", color: "from-primary to-cyan" },
-  { label: "Live Sessions", value: "8,342", change: "+8.3%", icon: Radio, trend: "up", color: "from-secondary to-purple-500" },
-  { label: "Licenses Active", value: "11,203", change: "+15.2%", icon: Key, trend: "up", color: "from-primary to-secondary" },
-  { label: "Devices Online", value: "24,591", change: "+22.1%", icon: Monitor, trend: "up", color: "from-cyan to-primary" },
-  { label: "Threats Blocked", value: "1,847", change: "-23.4%", icon: Shield, trend: "down", color: "from-accent to-red-500" },
-  { label: "API Calls Today", value: "892K", change: "+18.7%", icon: Zap, trend: "up", color: "from-primary to-cyan" },
+interface DashboardStats {
+  activeUsers: number
+  liveSessions: number
+  licensesActive: number
+  devicesOnline: number
+  threatsBlocked: number
+  apiCallsToday: number
+}
+
+interface ActivityItem {
+  id: string
+  action: string
+  details: string | null
+  createdAt: string
+  resource: string
+  resourceId: string
+  userId: string
+}
+
+interface DashboardData {
+  stats: DashboardStats
+  recentActivity: ActivityItem[]
+  chartData: number[]
+}
+
+const statConfigs = [
+  { label: "Active Users", key: "activeUsers" as const, icon: Users, color: "from-primary to-cyan" },
+  { label: "Live Sessions", key: "liveSessions" as const, icon: Radio, color: "from-secondary to-purple-500" },
+  { label: "Licenses Active", key: "licensesActive" as const, icon: Key, color: "from-primary to-secondary" },
+  { label: "Devices Online", key: "devicesOnline" as const, icon: Monitor, color: "from-cyan to-primary" },
+  { label: "Threats Blocked", key: "threatsBlocked" as const, icon: Shield, color: "from-accent to-red-500" },
+  { label: "API Calls Today", key: "apiCallsToday" as const, icon: Zap, color: "from-primary to-cyan" },
 ]
 
-const recentActivity = [
-  { action: "User authenticated successfully", user: "john.doe", time: "2 min ago", status: "success" },
-  { action: "License activated for Acme Corp", user: "Acme Corp", time: "15 min ago", status: "success" },
-  { action: "Suspicious login attempt blocked", user: "unknown", time: "1 hour ago", status: "warning" },
-  { action: "New device registered by jane.smith", user: "jane.smith", time: "2 hours ago", status: "success" },
-  { action: "Rate limit exceeded for API key", user: "api-key-3f8a", time: "3 hours ago", status: "error" },
-  { action: "Session terminated by admin", user: "admin", time: "4 hours ago", status: "warning" },
-]
+function getActionLabel(action: string): string {
+  const labels: Record<string, string> = {
+    LOGIN: "User logged in",
+    LOGOUT: "User logged out",
+    REGISTER: "New user registered",
+    SUSPICIOUS_LOGIN: "Suspicious login attempt detected",
+    BLOCKED: "Access attempt blocked",
+    ERROR: "Error occurred",
+    THREAT: "Threat detected",
+    LICENSE_ACTIVATED: "License activated",
+    LICENSE_DEACTIVATED: "License deactivated",
+    SESSION_TERMINATED: "Session terminated",
+    RATE_LIMIT: "Rate limit exceeded",
+    DEVICE_REGISTERED: "New device registered",
+    API_KEY_CREATED: "API key created",
+    API_KEY_REVOKED: "API key revoked",
+  }
+  return labels[action] || action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
-const chartData = [40, 65, 45, 80, 55, 90, 70, 85, 60, 75, 95, 80, 65, 50, 88, 72, 95, 68, 82, 78, 92, 85, 70, 88, 76, 94, 80, 65, 90, 85]
+function getActionStatus(action: string): "success" | "warning" | "error" {
+  const errorActions = ["ERROR", "FAILED", "RATE_LIMIT", "API_KEY_REVOKED"]
+  const warningActions = ["SUSPICIOUS_LOGIN", "BLOCKED", "THREAT", "SESSION_TERMINATED"]
+  if (errorActions.some((a) => action.startsWith(a) || action === a)) return "error"
+  if (warningActions.includes(action)) return "warning"
+  return "success"
+}
 
 export default function DashboardPage() {
+  const { data: session } = useSession()
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load dashboard data")
+        return res.json()
+      })
+      .then((json: DashboardData) => {
+        setData(json)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-muted text-sm">Loading dashboard...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-accent text-sm">Error: {error}</div>
+      </div>
+    )
+  }
+
+  const { stats, recentActivity, chartData } = data!
+  const maxChartValue = Math.max(...chartData, 1)
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -40,8 +125,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {stats.map((stat, i) => {
+        {statConfigs.map((stat, i) => {
           const Icon = stat.icon
+          const value = stats[stat.key]
           return (
             <motion.div
               key={stat.label}
@@ -55,12 +141,8 @@ export default function DashboardPage() {
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} p-2`}>
                       <Icon className="w-full h-full text-white" />
                     </div>
-                    <span className={`flex items-center gap-0.5 text-xs font-bold ${stat.trend === "up" ? "text-success" : "text-accent"}`}>
-                      {stat.change}
-                      {stat.trend === "up" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                    </span>
                   </div>
-                  <span className="text-2xl font-bold text-white">{stat.value}</span>
+                  <span className="text-2xl font-bold text-white">{formatNumber(value)}</span>
                   <p className="text-xs text-muted mt-0.5 font-medium">{stat.label}</p>
                 </CardContent>
               </Card>
@@ -83,7 +165,7 @@ export default function DashboardPage() {
                 <div key={i} className="flex-1 relative group cursor-pointer">
                   <div
                     className="absolute bottom-0 left-0 right-0 rounded-t bg-gradient-to-t from-primary/60 to-primary/20 hover:from-primary/80 transition-all duration-200"
-                    style={{ height: `${h}%` }}
+                    style={{ height: `${(h / maxChartValue) * 100}%` }}
                   />
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface border border-border px-2 py-1 rounded text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
                     {h.toLocaleString()} requests
@@ -108,22 +190,25 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentActivity.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 pb-3 border-b border-border/50 last:border-0 last:pb-0">
-                  {item.status === "success" && <CheckCircle className="w-4 h-4 text-success mt-0.5 shrink-0" />}
-                  {item.status === "warning" && <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />}
-                  {item.status === "error" && <XCircle className="w-4 h-4 text-accent mt-0.5 shrink-0" />}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{item.action}</p>
-                    <p className="text-xs text-muted/70 mt-0.5">
-                      {item.user} · {item.time}
-                    </p>
+              {recentActivity.map((item, i) => {
+                const status = getActionStatus(item.action)
+                return (
+                  <div key={item.id} className="flex items-start gap-3 pb-3 border-b border-border/50 last:border-0 last:pb-0">
+                    {status === "success" && <CheckCircle className="w-4 h-4 text-success mt-0.5 shrink-0" />}
+                    {status === "warning" && <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />}
+                    {status === "error" && <XCircle className="w-4 h-4 text-accent mt-0.5 shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{getActionLabel(item.action)}</p>
+                      <p className="text-xs text-muted/70 mt-0.5">
+                        {item.userId} &middot; {timeAgo(item.createdAt)}
+                      </p>
+                    </div>
+                    <Badge variant={status === "success" ? "success" : status === "warning" ? "warning" : "destructive"} className="shrink-0">
+                      {status}
+                    </Badge>
                   </div>
-                  <Badge variant={item.status === "success" ? "success" : item.status === "warning" ? "warning" : "destructive"} className="shrink-0">
-                    {item.status}
-                  </Badge>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
