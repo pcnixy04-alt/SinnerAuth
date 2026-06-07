@@ -25,16 +25,16 @@ interface AuditLog {
   user: AuditUser | null
 }
 
-const actionBadgeVariant: Record<string, "success" | "warning" | "destructive" | "info" | "default"> = {
+const actionBadgeVariant: Record<string, "success" | "warning" | "destructive" | "default" | "secondary"> = {
   LOGIN: "success",
   LOGOUT: "warning",
   REGISTER: "success",
   LOGIN_FAILED: "destructive",
-  API_KEY_CREATED: "info",
+  API_KEY_CREATED: "default",
   API_KEY_DELETED: "destructive",
   PASSWORD_RESET: "warning",
-  PASSWORD_CHANGED: "info",
-  PROFILE_UPDATED: "info",
+  PASSWORD_CHANGED: "default",
+  PROFILE_UPDATED: "default",
   SESSION_TERMINATED: "destructive",
   ADMIN_ACTION: "default",
 }
