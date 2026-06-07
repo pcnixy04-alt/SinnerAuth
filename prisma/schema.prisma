@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
+enum AccountRole {
   USER
   ADMIN
   SUPER_ADMIN
@@ -74,7 +74,7 @@ model User {
   username      String    @unique
   displayName   String?
   avatarUrl     String?
-  role          Role      @default(USER)
+  role          AccountRole @default(USER)
   isVerified    Boolean   @default(false)
   isActive      Boolean   @default(true)
   twoFactorEnabled Boolean @default(false)
