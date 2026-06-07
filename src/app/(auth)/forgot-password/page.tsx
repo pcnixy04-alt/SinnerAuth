@@ -7,7 +7,6 @@ import { Shield, Mail, ArrowRight, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 export default function ForgotPasswordPage() {
@@ -20,11 +19,13 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       })
 
-      if (error) throw error
+      if (!res.ok) throw new Error("Failed to send reset email")
 
       setSent(true)
       toast.success("Password reset link sent!")

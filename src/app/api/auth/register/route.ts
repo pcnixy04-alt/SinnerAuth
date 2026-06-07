@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { hashPassword } from "@/lib/auth"
-import { supabaseAdmin } from "@/lib/supabase"
 import { z } from "zod"
 
 const registerSchema = z.object({
@@ -28,7 +27,7 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password)
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email,
         username,
@@ -37,28 +36,9 @@ export async function POST(req: Request) {
       },
     })
 
-    const { error: supabaseError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: false,
-    })
-
-    if (supabaseError) {
-      await prisma.user.delete({ where: { id: user.id } })
-      return NextResponse.json(
-        { error: "Failed to create authentication user" },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json(
       {
         message: "User created successfully",
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-        },
       },
       { status: 201 }
     )

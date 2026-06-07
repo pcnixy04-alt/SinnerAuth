@@ -8,7 +8,6 @@ import { Shield, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 export default function ResetPasswordPage() {
@@ -26,14 +25,16 @@ export default function ResetPasswordPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: form.password,
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: form.password }),
       })
 
-      if (error) throw error
+      if (!res.ok) throw new Error("Failed to reset password")
 
       toast.success("Password updated successfully!")
-      router.push("/dashboard")
+      router.push("/login")
     } catch (error: any) {
       toast.error(error.message || "Failed to update password")
     } finally {
