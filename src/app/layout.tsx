@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight" })
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" })
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { SessionProvider } from "@/hooks/useAuth"
 import { Toaster } from "sonner"
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
   title: {
@@ -77,7 +79,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <SessionProvider>
           <Navbar />
           <main className="min-h-screen">{children}</main>

@@ -6,21 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 const stats = [
-  { label: "Active Users", value: "12,847", change: "+12.5%", icon: Users, trend: "up", color: "from-blue-400 to-blue-600" },
-  { label: "Live Sessions", value: "8,342", change: "+8.3%", icon: Radio, trend: "up", color: "from-indigo-400 to-indigo-600" },
-  { label: "Licenses Active", value: "11,203", change: "+15.2%", icon: Key, trend: "up", color: "from-blue-300 to-blue-500" },
-  { label: "Devices Online", value: "24,591", change: "+22.1%", icon: Monitor, trend: "up", color: "from-cyan-400 to-cyan-600" },
-  { label: "Threats Blocked", value: "1,847", change: "-23.4%", icon: Shield, trend: "down", color: "from-red-400 to-red-600" },
-  { label: "API Calls Today", value: "892K", change: "+18.7%", icon: Zap, trend: "up", color: "from-blue-500 to-indigo-600" },
+  { label: "Active Users", value: "12,847", change: "+12.5%", icon: Users, trend: "up", color: "from-primary to-cyan" },
+  { label: "Live Sessions", value: "8,342", change: "+8.3%", icon: Radio, trend: "up", color: "from-secondary to-purple-500" },
+  { label: "Licenses Active", value: "11,203", change: "+15.2%", icon: Key, trend: "up", color: "from-primary to-secondary" },
+  { label: "Devices Online", value: "24,591", change: "+22.1%", icon: Monitor, trend: "up", color: "from-cyan to-primary" },
+  { label: "Threats Blocked", value: "1,847", change: "-23.4%", icon: Shield, trend: "down", color: "from-accent to-red-500" },
+  { label: "API Calls Today", value: "892K", change: "+18.7%", icon: Zap, trend: "up", color: "from-primary to-cyan" },
 ]
 
 const recentActivity = [
-  { action: "🔐 User authenticated successfully", user: "john.doe", time: "2 min ago", status: "success" },
-  { action: "📜 License activated for Acme Corp", user: "Acme Corp", time: "15 min ago", status: "success" },
-  { action: "⚠️ Suspicious login attempt blocked", user: "unknown", time: "1 hour ago", status: "warning" },
-  { action: "💻 New device registered by jane.smith", user: "jane.smith", time: "2 hours ago", status: "success" },
-  { action: "🚫 Rate limit exceeded for API key", user: "api-key-3f8a", time: "3 hours ago", status: "error" },
-  { action: "🛑 Session terminated by admin", user: "admin", time: "4 hours ago", status: "warning" },
+  { action: "User authenticated successfully", user: "john.doe", time: "2 min ago", status: "success" },
+  { action: "License activated for Acme Corp", user: "Acme Corp", time: "15 min ago", status: "success" },
+  { action: "Suspicious login attempt blocked", user: "unknown", time: "1 hour ago", status: "warning" },
+  { action: "New device registered by jane.smith", user: "jane.smith", time: "2 hours ago", status: "success" },
+  { action: "Rate limit exceeded for API key", user: "api-key-3f8a", time: "3 hours ago", status: "error" },
+  { action: "Session terminated by admin", user: "admin", time: "4 hours ago", status: "warning" },
 ]
 
 const chartData = [40, 65, 45, 80, 55, 90, 70, 85, 60, 75, 95, 80, 65, 50, 88, 72, 95, 68, 82, 78, 92, 85, 70, 88, 76, 94, 80, 65, 90, 85]
@@ -30,10 +30,10 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
-          <p className="text-sm text-blue-400/70 mt-1">Real-time monitoring of your authentication platform</p>
+          <h1 className="text-display-xs font-bold text-white">Dashboard Overview</h1>
+          <p className="text-sm text-muted mt-1">Real-time monitoring of your authentication platform</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-sm text-primary">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20 text-sm text-success">
           <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
           All Systems Operational
         </div>
@@ -55,7 +55,7 @@ export default function DashboardPage() {
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} p-2`}>
                       <Icon className="w-full h-full text-white" />
                     </div>
-                    <span className={`flex items-center gap-0.5 text-xs font-bold ${stat.trend === "up" ? "text-success" : "text-destructive"}`}>
+                    <span className={`flex items-center gap-0.5 text-xs font-bold ${stat.trend === "up" ? "text-success" : "text-accent"}`}>
                       {stat.change}
                       {stat.trend === "up" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                     </span>
@@ -112,9 +112,9 @@ export default function DashboardPage() {
                 <div key={i} className="flex items-start gap-3 pb-3 border-b border-border/50 last:border-0 last:pb-0">
                   {item.status === "success" && <CheckCircle className="w-4 h-4 text-success mt-0.5 shrink-0" />}
                   {item.status === "warning" && <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />}
-                  {item.status === "error" && <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
+                  {item.status === "error" && <XCircle className="w-4 h-4 text-accent mt-0.5 shrink-0" />}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white/90 truncate">{item.action}</p>
+                    <p className="text-sm text-white truncate">{item.action}</p>
                     <p className="text-xs text-muted/70 mt-0.5">
                       {item.user} · {item.time}
                     </p>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-3 rounded-sm ${Math.random() > 0.02 ? "bg-success/80" : "bg-destructive/80"}`}
+                  className={`w-3 h-3 rounded-sm ${Math.random() > 0.02 ? "bg-success/80" : "bg-accent/80"}`}
                   title={`Day ${i + 1}`}
                 />
               ))}
