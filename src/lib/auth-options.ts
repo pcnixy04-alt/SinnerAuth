@@ -61,4 +61,19 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+  events: {
+    async signIn({ user }) {
+      if (user.id) {
+        await prisma.auditLog.create({
+          data: {
+            action: "LOGIN",
+            userId: user.id,
+            resource: "user",
+            resourceId: user.id,
+            details: { method: "credentials" },
+          },
+        }).catch(() => {})
+      }
+    },
+  },
 }

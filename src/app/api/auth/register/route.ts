@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { hashPassword } from "@/lib/auth"
+import { hashPassword, createAuditLog } from "@/lib/auth"
 import { z } from "zod"
 
 const registerSchema = z.object({
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password)
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         username,
@@ -35,6 +35,14 @@ export async function POST(req: Request) {
         displayName: username,
       },
     })
+
+    await createAuditLog({
+      action: "CREATE",
+      userId: user.id,
+      resource: "user",
+      resourceId: user.id,
+      details: { method: "register" },
+    }).catch(() => {})
 
     return NextResponse.json(
       {
