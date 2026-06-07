@@ -25,13 +25,13 @@
     @apply bg-gradient-glass backdrop-blur-2xl border border-white/10;
   }
   .glow {
-    box-shadow: 0 0 40px rgba(0, 229, 255, 0.15), 0 0 80px rgba(0, 229, 255, 0.05);
+    box-shadow: 0 0 40px rgba(79, 172, 254, 0.15), 0 0 80px rgba(79, 172, 254, 0.05);
   }
   .glow-secondary {
-    box-shadow: 0 0 40px rgba(110, 86, 207, 0.15), 0 0 80px rgba(110, 86, 207, 0.05);
+    box-shadow: 0 0 40px rgba(108, 99, 255, 0.15), 0 0 80px rgba(108, 99, 255, 0.05);
   }
   .glow-accent {
-    box-shadow: 0 0 40px rgba(255, 45, 85, 0.15), 0 0 80px rgba(255, 45, 85, 0.05);
+    box-shadow: 0 0 40px rgba(0, 242, 254, 0.15), 0 0 80px rgba(0, 242, 254, 0.05);
   }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-primary;
@@ -51,15 +51,15 @@
 @layer components {
   .cyber-grid {
     background-image: 
-      linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(79, 172, 254, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79, 172, 254, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
   }
   .hero-gradient {
-    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 229, 255, 0.15), transparent);
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 172, 254, 0.15), transparent);
   }
   .card-gradient {
-    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 50%, rgba(0,229,255,0.02) 100%);
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.04) 0%, rgba(79, 172, 254, 0.01) 50%, rgba(108, 99, 255, 0.02) 100%);
   }
   .input-focus {
     @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50;
@@ -87,20 +87,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: #0A0E27;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1A1A1A;
+  background: #1A2050;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2A2A2A;
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+  background: #2A3070;
 }
