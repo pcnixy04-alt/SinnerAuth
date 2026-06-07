@@ -74,6 +74,9 @@ model User {
   displayName   String?
   avatarUrl     String?
   role          AccountRole @default(USER)
+  plan          String    @default("FREE")
+  planExpiresAt DateTime?
+  planReminded  Boolean   @default(false)
   isVerified    Boolean   @default(false)
   isActive      Boolean   @default(true)
   twoFactorEnabled Boolean @default(false)

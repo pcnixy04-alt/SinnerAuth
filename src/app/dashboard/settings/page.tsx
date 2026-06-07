@@ -3,11 +3,12 @@
 import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { User, Mail, Shield, Bell, Globe, Palette, Save, Loader2 } from "lucide-react"
+import { User, Mail, Shield, Bell, Globe, Palette, Save, Loader2, Crown, Zap, Handshake } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 
@@ -69,7 +70,56 @@ export default function SettingsPage() {
         </Card>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <Card className="border-primary/20 bg-primary/[0.02]">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              {session?.user?.plan === "PROFESSIONAL" ? <Crown className="w-4 h-4 text-warning" /> :
+               session?.user?.plan === "PARTNER" ? <Handshake className="w-4 h-4 text-secondary" /> :
+               <Zap className="w-4 h-4 text-primary" />}
+              Current Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg font-bold text-white">
+                    {session?.user?.plan === "PROFESSIONAL" ? "Professional" :
+                     session?.user?.plan === "PARTNER" ? "Partner" :
+                     "Free"}
+                  </span>
+                  <Badge variant={
+                    session?.user?.plan === "PROFESSIONAL" ? "warning" :
+                    session?.user?.plan === "PARTNER" ? "default" :
+                    "secondary"
+                  }>
+                    {session?.user?.plan || "FREE"}
+                  </Badge>
+                </div>
+                {session?.user?.plan === "FREE" && (
+                  <p className="text-xs text-muted">1 API key · 5 requests/min</p>
+                )}
+                {session?.user?.plan === "PROFESSIONAL" && session?.user?.planExpiresAt && (
+                  <p className="text-xs text-muted">
+                    Expires {new Date(session.user.planExpiresAt).toLocaleDateString()}
+                  </p>
+                )}
+                {session?.user?.plan === "PARTNER" && (
+                  <p className="text-xs text-muted">Custom partnership plan · unlimited access</p>
+                )}
+              </div>
+              {session?.user?.plan === "FREE" && (
+                <Button variant="outline" size="sm" className="border-primary/30 text-primary" asChild>
+                  <a href="/pricing">Upgrade</a>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">

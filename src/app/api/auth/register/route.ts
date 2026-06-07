@@ -33,6 +33,7 @@ export async function POST(req: Request) {
         username,
         passwordHash,
         displayName: username,
+        plan: "FREE",
       },
     })
 

@@ -22,6 +22,8 @@ export async function GET() {
       username: true,
       displayName: true,
       role: true,
+      plan: true,
+      planExpiresAt: true,
       isActive: true,
       isVerified: true,
       lastLoginAt: true,

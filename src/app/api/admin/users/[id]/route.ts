@@ -31,10 +31,14 @@ export async function PATCH(
       ...(body.role && { role: body.role }),
       ...(body.isActive !== undefined && { isActive: body.isActive }),
       ...(body.isVerified !== undefined && { isVerified: body.isVerified }),
+      ...(body.plan && { plan: body.plan }),
+      ...(body.planExpiresAt !== undefined && { planExpiresAt: body.planExpiresAt ? new Date(body.planExpiresAt) : null }),
+      ...(body.planReminded !== undefined && { planReminded: body.planReminded }),
     },
     select: {
       id: true, email: true, username: true, displayName: true,
-      role: true, isActive: true, isVerified: true, lastLoginAt: true,
+      role: true, plan: true, planExpiresAt: true, planReminded: true,
+      isActive: true, isVerified: true, lastLoginAt: true,
     },
   })
 

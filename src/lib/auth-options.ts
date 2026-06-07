@@ -34,12 +34,24 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
         if (!isValid) return null
 
+        const isExpired = user.plan === "PROFESSIONAL" && user.planExpiresAt && new Date(user.planExpiresAt) < new Date()
+        if (isExpired) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { plan: "FREE", planExpiresAt: null, planReminded: false },
+          })
+          user.plan = "FREE"
+          user.planExpiresAt = null
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.displayName || user.username,
           image: user.avatarUrl,
           role: user.role,
+          plan: user.plan,
+          planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
         }
       },
     }),
@@ -57,6 +69,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = (user as any).role
+        token.plan = (user as any).plan
+        token.planExpiresAt = (user as any).planExpiresAt
       }
       return token
     },
@@ -64,6 +78,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         ;(session.user as any).id = token.id
         ;(session.user as any).role = token.role
+        ;(session.user as any).plan = token.plan
+        ;(session.user as any).planExpiresAt = token.planExpiresAt
       }
       return session
     },

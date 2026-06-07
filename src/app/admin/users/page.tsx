@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Search, Plus, Loader2, MoreHorizontal, Shield, UserX, UserCheck, Trash2 } from "lucide-react"
+import { Search, Plus, Loader2, MoreHorizontal, Shield, UserX, UserCheck, Trash2, Crown, Zap, Handshake } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ type User = {
   username: string
   displayName: string | null
   role: "USER" | "ADMIN" | "SUPER_ADMIN"
+  plan: string
+  planExpiresAt: string | null
   isActive: boolean
   isVerified: boolean
   lastLoginAt: string | null
@@ -156,6 +158,12 @@ export default function AdminUsersPage() {
     return "secondary"
   }
 
+  const planBadgeVariant = (plan: string) => {
+    if (plan === "PROFESSIONAL") return "warning"
+    if (plan === "PARTNER") return "default"
+    return "secondary"
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -187,6 +195,7 @@ export default function AdminUsersPage() {
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-xs text-muted font-medium">User</th>
                   <th className="text-left p-4 text-xs text-muted font-medium">Role</th>
+                  <th className="text-left p-4 text-xs text-muted font-medium">Plan</th>
                   <th className="text-left p-4 text-xs text-muted font-medium">Status</th>
                   <th className="text-center p-4 text-xs text-muted font-medium">Sessions</th>
                   <th className="text-center p-4 text-xs text-muted font-medium">Devices</th>
@@ -197,13 +206,13 @@ export default function AdminUsersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center">
+                    <td colSpan={8} className="p-8 text-center">
                       <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted text-sm">
+                    <td colSpan={8} className="p-8 text-center text-muted text-sm">
                       No users found
                     </td>
                   </tr>
@@ -237,6 +246,16 @@ export default function AdminUsersPage() {
                         </Badge>
                       </td>
                       <td className="p-4">
+                        <Badge variant={planBadgeVariant(user.plan)} className="text-xs gap-1">
+                          {user.plan === "PROFESSIONAL" ? <Crown className="w-3 h-3" /> :
+                           user.plan === "PARTNER" ? <Handshake className="w-3 h-3" /> :
+                           <Zap className="w-3 h-3" />}
+                          {user.plan === "PROFESSIONAL" ? "Pro" :
+                           user.plan === "PARTNER" ? "Partner" :
+                           "Free"}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
                         <Badge variant={user.isActive ? "success" : "warning"} className="text-xs">
                           {user.isActive ? "active" : "suspended"}
                         </Badge>
@@ -254,7 +273,7 @@ export default function AdminUsersPage() {
                         {openDropdown === user.id && (
                           <div
                             ref={dropdownRef}
-                            className="absolute right-4 top-12 z-50 w-48 bg-[#0a0a0a] border border-border rounded-lg shadow-xl py-1"
+                            className="absolute right-4 top-12 z-50 w-52 bg-[#0a0a0a] border border-border rounded-lg shadow-xl py-1"
                           >
                             {user.role !== "ADMIN" && (
                               <button
@@ -287,6 +306,34 @@ export default function AdminUsersPage() {
                               <UserX className="w-4 h-4 text-warning" />
                               {user.isActive ? "Ban User" : "Unban User"}
                             </button>
+                            <div className="border-t border-border my-1" />
+                            <p className="px-3 py-1 text-xs text-muted font-medium">Set Plan</p>
+                            {["PROFESSIONAL", "PARTNER", "FREE"].filter((p) => p !== user.plan).map((plan) => (
+                              <button
+                                key={plan}
+                                onClick={() =>
+                                  patchUser(
+                                    user.id,
+                                    {
+                                      plan,
+                                      planExpiresAt:
+                                        plan === "PROFESSIONAL"
+                                          ? new Date(Date.now() + 30 * 86400000).toISOString()
+                                          : null,
+                                      planReminded: false,
+                                    },
+                                    `Plan set to ${plan}`
+                                  )
+                                }
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors text-left"
+                              >
+                                {plan === "PROFESSIONAL" ? <Crown className="w-4 h-4 text-warning" /> :
+                                 plan === "PARTNER" ? <Handshake className="w-4 h-4 text-secondary" /> :
+                                 <Zap className="w-4 h-4 text-muted" />}
+                                {plan === "PROFESSIONAL" ? "Professional (30d)" :
+                                 plan === "PARTNER" ? "Partner" : "Free"}
+                              </button>
+                            ))}
                             <div className="border-t border-border my-1" />
                             <button
                               onClick={() => deleteUser(user.id)}

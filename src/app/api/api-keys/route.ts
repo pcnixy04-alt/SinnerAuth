@@ -26,6 +26,14 @@ export async function POST(req: Request) {
   }
 
   try {
+    const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true } })
+    if (user?.plan === "FREE") {
+      const count = await prisma.apiKey.count({ where: { userId: session.user.id, isActive: true } })
+      if (count >= 1) {
+        return NextResponse.json({ error: "Free plan limit: 1 API key. Upgrade to create more." }, { status: 403 })
+      }
+    }
+
     const { name, projectId, permissions, expiresInDays } = await req.json()
 
     if (!name || !projectId) {
