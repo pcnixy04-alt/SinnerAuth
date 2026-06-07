@@ -59,7 +59,7 @@ const plans = [
       "Custom Contracting",
     ],
     cta: "Contact Sales",
-    href: "/contact",
+    href: "https://discord.gg/V2eVZkby5V",
     featured: false,
   },
 ]

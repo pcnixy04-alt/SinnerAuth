@@ -71,7 +71,7 @@ const plans = [
       "Early Access Features",
     ],
     cta: "Contact Sales",
-    href: "/contact",
+    href: "https://discord.gg/V2eVZkby5V",
     featured: false,
   },
 ]
