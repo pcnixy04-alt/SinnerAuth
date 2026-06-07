@@ -15,6 +15,7 @@ import {
   KeyRound,
   Settings,
   Shield,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -38,7 +39,7 @@ const sidebarItems = [
 export function DashboardSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
 
   return (
     <aside
@@ -98,6 +99,29 @@ export function DashboardSidebar() {
             </Link>
           )
         })}
+        {user?.role === "SUPER_ADMIN" && (
+          <>
+            <div className="border-t border-border my-2" />
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 group",
+                collapsed && "justify-center px-2",
+                pathname.startsWith("/admin")
+                  ? "bg-accent/10 text-accent border border-accent/20"
+                  : "text-muted hover:text-accent hover:bg-accent/5"
+              )}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              {!collapsed && <span>Admin Panel</span>}
+              {collapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-surface border border-border rounded text-xs text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+                  Admin Panel
+                </div>
+              )}
+            </Link>
+          </>
+        )}
       </nav>
 
       <div className="p-2 border-t border-border">
