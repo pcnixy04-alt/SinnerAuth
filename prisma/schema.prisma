@@ -92,6 +92,7 @@ model User {
   licenses      License[]
   configurations Configuration[]
   permissions   UserPermission[]
+  userRoles     UserRole[]
 }
 
 model UserPermission {
