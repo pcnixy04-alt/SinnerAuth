@@ -69,7 +69,7 @@ export default function LoginPage() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   placeholder="username or email"
                   className="pl-10"
                   value={form.email}
