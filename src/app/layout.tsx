@@ -5,8 +5,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight" })
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" })
-import { Navbar } from "@/components/layout/navbar"
-import { Footer } from "@/components/layout/footer"
+import { LayoutHandler } from "@/components/layout/layout-handler"
 import { SessionProvider } from "@/hooks/useAuth"
 import { Toaster } from "sonner"
 
@@ -81,9 +80,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <SessionProvider>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
+          <LayoutHandler>{children}</LayoutHandler>
           <Toaster
             position="bottom-right"
             toastOptions={{
