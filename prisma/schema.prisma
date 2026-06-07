@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Permission {
+  READ_USERS
+  WRITE_USERS
+  DELETE_USERS
+  READ_PROJECTS
+  WRITE_PROJECTS
+  DELETE_PROJECTS
+  READ_LICENSES
+  WRITE_LICENSES
+  DELETE_LICENSES
+  READ_SESSIONS
+  MANAGE_SESSIONS
+  READ_ANALYTICS
+  MANAGE_API_KEYS
+  MANAGE_WEBHOOKS
+  READ_AUDIT_LOGS
+  MANAGE_CONFIGURATIONS
+  MANAGE_ROLES
+}
+
+enum LicenseStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  REVOKED
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_RESET
+  EMAIL_VERIFY
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  WEBHOOK_CREATED
+  WEBHOOK_UPDATED
+  WEBHOOK_DELETED
+  LICENSE_CREATED
+  LICENSE_REVOKED
+  LICENSE_SUSPENDED
+  SESSION_TERMINATED
+  ROLE_CHANGED
+  PERMISSION_CHANGED
+  SETTINGS_UPDATED
+  CONFIGURATION_UPDATED
+  THREAT_DETECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  username      String    @unique
+  displayName   String?
+  avatarUrl     String?
+  role          Role      @default(USER)
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projects      Project[]
+  sessions      Session[]
+  devices       Device[]
+  auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  webhooks      Webhook[]
+  licenses      License[]
+  configurations Configuration[]
+  permissions   UserPermission[]
+}
+
+model UserPermission {
+  id         String     @id @default(cuid())
+  userId     String
+  permission Permission
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permission])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenses    License[]
+  sessions    Session[]
+  devices     Device[]
+  apiKeys     ApiKey[]
+  webhooks    Webhook[]
+  configurations Configuration[]
+}
+
+model License {
+  id            String        @id @default(cuid())
+  key           String        @unique
+  status        LicenseStatus @default(ACTIVE)
+  type          String
+  maxUsers      Int           @default(1)
+  maxDevices    Int           @default(1)
+  expiresAt     DateTime?
+  metadata      Json?
+  userId        String
+  projectId     String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  devices       Device[]
+}
+
+model Session {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  ipAddress     String?
+  userAgent     String?
+  location      String?
+  isActive      Boolean   @default(true)
+  lastActivity  DateTime  @default(now())
+  expiresAt     DateTime
+  userId        String
+  projectId     String?
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id            String   @id @default(cuid())
+  hwid          String   @unique
+  name          String?
+  platform      String?
+  osVersion     String?
+  fingerprint   Json?
+  isTrusted     Boolean  @default(false)
+  isBanned      Boolean  @default(false)
+  lastSeenAt    DateTime @default(now())
+  userId        String
+  projectId     String
+  licenseId     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  license       License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id            String       @id @default(cuid())
+  action        AuditAction
+  resource      String?
+  resourceId    String?
+  details       Json?
+  ipAddress     String?
+  userAgent     String?
+  userId        String
+  createdAt     DateTime     @default(now())
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model Configuration {
+  id            String   @id @default(cuid())
+  key           String
+  value         Json
+  description   String?
+  isEncrypted   Boolean  @default(false)
+  environment   String   @default("production")
+  userId        String
+  projectId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([key, projectId])
+}
+
+model ApiKey {
+  id            String    @id @default(cuid())
+  name          String
+  key           String    @unique
+  prefix        String
+  lastChars     String
+  permissions   Permission[]
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  lastUsedAt    DateTime?
+  userId        String
+  projectId     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Webhook {
+  id            String    @id @default(cuid())
+  name          String
+  url           String
+  secret        String
+  events        String[]
+  isActive      Boolean   @default(true)
+  retryCount    Int       @default(3)
+  timeoutMs     Int       @default(5000)
+  lastTriggeredAt DateTime?
+  userId        String
+  projectId     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  isSystem    Boolean      @default(false)
+  permissions Permission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users       UserRole[]
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}

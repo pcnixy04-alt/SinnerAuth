@@ -1,0 +1,10 @@
+# SinnerAuth - Enterprise Authentication Platform
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://sinnerauth.com/sitemap.xml
+
+# Disallow admin and auth pages
+Disallow: /dashboard/
+Disallow: /api/
