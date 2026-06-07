@@ -27,6 +27,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !user.passwordHash) return null
 
+        if (!user.isActive) {
+          throw new Error("Your account has been banned from SinnerAuth")
+        }
+
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
         if (!isValid) return null
 

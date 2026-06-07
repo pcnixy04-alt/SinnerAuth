@@ -32,7 +32,7 @@ export default function LoginPage() {
         redirect: false,
       })
 
-      if (result?.error) throw new Error("Invalid email or password")
+      if (result?.error) throw new Error(result.error)
 
       toast.success("Welcome back!")
       router.push("/dashboard")

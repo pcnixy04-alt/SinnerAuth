@@ -9,7 +9,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  const requester = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } })
+  const isAdmin = requester?.role === "SUPER_ADMIN"
+
   const users = await prisma.user.findMany({
+    where: isAdmin ? undefined : { id: session.user.id },
     select: {
       id: true,
       email: true,
@@ -22,7 +26,7 @@ export async function GET() {
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: isAdmin ? 50 : undefined,
   })
 
   return NextResponse.json(users)
